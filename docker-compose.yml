@@ -25,7 +25,6 @@ services:
   tidecloak:
     image: tideorg/tidecloak-dev:latest
     restart: unless-stopped
-    command: ["start", "--import-realm", "--optimized"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${TIDECLOAK_ADMIN:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${TIDECLOAK_ADMIN_PASSWORD:-password}

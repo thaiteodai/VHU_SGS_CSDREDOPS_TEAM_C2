@@ -30,6 +30,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "jsdom": "^25.0.1",
+    "playwright": "^1.64.1",
     "prettier": "^3.3.3",
     "vite": "^6.3.5",
     "vitest": "^2.1.2"
@@ -37,5 +38,21 @@
   "allowScripts": {
     "esbuild": true,
     "@tidecloak/js": true
-  }
+  },
+  "description": "[![Built with TideCloak](https://tide.org/badges/built-with-tidecloak.svg)](https://tide.org/tidecloak?utm_source=github&utm_medium=readme&utm_campaign=unlocked)",
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thaiteodai/VHU_SGS_CSDREDOPS_TEAM_C2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/thaiteodai/VHU_SGS_CSDREDOPS_TEAM_C2/issues"
+  },
+  "homepage": "https://github.com/thaiteodai/VHU_SGS_CSDREDOPS_TEAM_C2#readme"
 }
