@@ -228,7 +228,7 @@ router.post("/tidecloak", async (req, res, next) => {
       redirectUri: redirectUri ?? "",
     });
 
-    const profile = await tidecloak.fetchProfile(tokens.access_token);
+    const profile = await tidecloak.resolveProfile(tokens);
     const user = await tidecloak.upsertUserFromProfile(profile);
 
     await prisma.tidecloakToken.create({

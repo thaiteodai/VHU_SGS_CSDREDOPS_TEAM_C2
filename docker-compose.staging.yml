@@ -29,8 +29,8 @@ services:
       DATABASE_URL: postgresql://panicplan:${POSTGRES_PASSWORD:-panicplan}@db:5432/panicplan_staging?schema=public
       CLIENT_ORIGIN: ${STAGING_CLIENT_ORIGIN:-http://localhost:8081}
       APP_URL: ${STAGING_APP_URL:-http://localhost:8081}
-      TIDECLOAK_ISSUER: http://tidecloak:8080/realms/panicplan
-      TIDECLOAK_AUTHORIZATION_ENDPOINT: http://tidecloak:8080/realms/panicplan/protocol/openid-connect/auth
+      TIDECLOAK_ISSUER: http://localhost:8082/realms/panicplan,http://tidecloak:8080/realms/panicplan
+      TIDECLOAK_AUTHORIZATION_ENDPOINT: http://localhost:8082/realms/panicplan/protocol/openid-connect/auth
       TIDECLOAK_TOKEN_ENDPOINT: http://tidecloak:8080/realms/panicplan/protocol/openid-connect/token
       TIDECLOAK_USERINFO_ENDPOINT: http://tidecloak:8080/realms/panicplan/protocol/openid-connect/userinfo
       TIDECLOAK_JWKS_URI: http://tidecloak:8080/realms/panicplan/protocol/openid-connect/certs

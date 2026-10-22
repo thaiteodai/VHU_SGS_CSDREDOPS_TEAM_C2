@@ -23,6 +23,12 @@ check() {
   else red "$name (expected '$expected', got '$actual')"; fi
 }
 
+check_absent() {
+  local name="$1" unexpected="$2" actual="$3"
+  if [[ "$actual" != *"$unexpected"* ]]; then green "$name"; PASS=$((PASS + 1));
+  else red "$name (should not contain '$unexpected')"; fi
+}
+
 stamp=$(date +%s)
 EMAIL="smoke-$stamp@panicplan.test"
 PASSWORD="Password123!"
@@ -74,7 +80,8 @@ check "target has a panic meter value" '"panic"' "$target"
 
 # --- validation -------------------------------------------------------------
 bad=$(curl -s -m 10 "${AUTH[@]}" -X POST "$API/api/targets" -d '{"title":"","dueAt":"nope","chaosLevel":99}')
-check "server rejects invalid target" 'Validation error' "$bad"
+check "server rejects invalid target" 'not right' "$bad"
+check "server reports which field failed" 'chaosLevel' "$bad"
 
 # --- steps ------------------------------------------------------------------
 step=$(curl -s -m 10 "${AUTH[@]}" -X POST "$API/api/targets/$TID/steps" -d '{"label":"Do the thing"}')
@@ -90,7 +97,7 @@ check "deploy a roast" '"tier"' "$roast"
 
 # --- role gate: a plain member cannot list all users -----------------------
 users=$(curl -s -m 10 "${AUTH[@]}" "$API/api/users")
-check "member blocked from the admin user list" 'Forbidden' "$users"
+check "member blocked from the admin user list" 'do not have permission' "$users"
 
 # --- wall of shame ----------------------------------------------------------
 shame=$(curl -s -m 10 "${AUTH[@]}" "$API/api/shame")
@@ -99,7 +106,8 @@ check "wall of shame responds" 'entries' "$shame"
 # --- export -----------------------------------------------------------------
 export=$(curl -s -m 10 "${AUTH[@]}" "$API/api/users/me/export")
 check "data export contains the account" 'panicplan.local' "$export"
-check "data export hides the password hash" '"passwordHash"' "$export"
+check_absent "data export hides the password hash" '"passwordHash"' "$export"
+check_absent "data export hides the refresh tokens" '"refreshTokens"' "$export"
 
 # --- audit log --------------------------------------------------------------
 audit=$(curl -s -m 10 "${AUTH[@]}" "$API/api/auth/me")

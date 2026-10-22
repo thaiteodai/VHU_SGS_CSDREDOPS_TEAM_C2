@@ -1,45 +1,142 @@
-# Panic Plan
+[![Built with TideCloak](https://tide.org/badges/built-with-tidecloak.svg)](https://tide.org/tidecloak?utm_source=github&utm_medium=readme&utm_campaign=unlocked)
 
-**Absurdly accountable deadlines and target manager.**
+## Project overview
 
-Set a deadline. Invite a friend to hold you to it. When the clock gets scary, we
-deploy a roast. Nobody gets to move the line.
+_Panic Plan turns a deadline into a public commitment: you set a target, invite a friend to witness it, and the app escalates a roast as the clock runs down._
 
-Built with [TideCloak](https://tide.org/tidecloak) for identity, in hybrid
-(BFF) mode — the browser never holds an identity token.
+Built with [TideCloak](https://tide.org/tidecloak?utm_source=github&utm_medium=readme&utm_campaign=unlocked).
 
----
+### 1. Vision & originality
 
-## The idea in one minute
+Most deadline apps let you snooze, reschedule and quietly abandon things. The
+abandonment is invisible, so nothing ever changes. Panic Plan makes the
+*failure* the product:
 
-A normal deadline app lets you snooze, reschedule and quietly abandon things.
-Panic Plan makes the abandonment *public*:
+- Every target has a **deadline, a chaos level and a deadline personality**.
+  The personality ("The Overconfident Optimist", "The Silent Slobber", "The
+  Methodical Masochist") colours every message the app writes about it.
+- The **roast escalation** is deterministic, never random. As the deadline
+  approaches, the app moves through five tiers — *Polite*, *Passive-Aggressive*,
+  *Legal*, *Desperate*, *Cosmic Despair*. The clock decides the tier; your
+  chaos level (1–5) shifts it one step softer or harsher.
+- An **accountability buddy** can be invited to a single target. Buddies can
+  deploy the roast on you, and you can deploy it on them. The relationship is
+  scoped to one target, never the whole account.
+- Finishing a target triggers a **victory lap**: confetti and a sarcastic
+  eulogy for the deadline that died. Missing one puts it on the **Wall of
+  Shame** — but only if you opted in.
+- Every roast carries a **meme**, rendered server-side from a live template
+  pool, so the escalation actually lands.
 
-1. You create a **target** — a title, a deadline, and how much chaos you want.
-2. You invite a **buddy**. They can see the target and deploy roasts on it.
-3. As the deadline approaches, the **roast tier escalates automatically**, from
-   *Polite* through *Legal* to *Cosmic Despair*.
-4. When you finish, you get a **victory lap** and a sarcastic eulogy for the
-   deadline that died.
-5. Miss it, and (only if you opted in) it goes on the **Wall of Shame**.
+Nobody can move the line. There is no admin override, no "move my friend's
+queue position" button, and the role model is enforced on the server.
 
-The escalation tier is derived from the clock, never from randomness:
+### 2. Trust constraint insight
 
-| Tier | When it hits | Vibe |
-|---|---|---|
-| 1 · Polite | more than 7 days out | "just a friendly heads-up" |
-| 2 · Passive-aggressive | 3 to 7 days out | "I looked it up so you don't have to" |
-| 3 · Legal | 1 to 3 days out | "I have started a formal record of this" |
-| 4 · Desperate | less than a day | "I am using your full name now" |
-| 5 · Cosmic | overdue | "I have taken up a new hobby of disappointment" |
+Deadlines fail for a boring reason: nobody is watching. The usual fix is
+nagging — WhatsApp messages, reminder apps, a colleague being polite. All of
+them are soft. You can mute a friend, you can dismiss a notification, you can
+quietly slip a date, and no one notices or can prove anything.
 
-Your **chaos level** (1–5) shifts the tier one step softer or harsher. Your
-**deadline personality** (The Overconfident Optimist, The Silent Slobber, The
-Methodical Masochist…) colours the copy.
+The real blocker is **verifiable accountability without surveillance**. To hold
+someone to a deadline you need to know who they are, you need to know the
+promise was made, and you need everyone else to be able to check that the same
+rules applied to everybody. Today you can have any one of those on its own, but
+not all three at once — and the moment you ask for the third, you hand over
+your data to a platform that has no incentive to keep it narrow.
 
----
+Panic Plan shows that this constraint is removable. Identity comes from
+TideCloak, so a member carries one verifiable identity across sign-in methods
+instead of a new silo of app-specific accounts. The commitment and its
+witnesses are first-class records with an append-only public log, so the
+accountability is legible to everyone without handing anyone a dossier. The
+roast is the enforcement: social consequence, not institutional surveillance.
 
-## Quick start
+Privacy is not a policy page here, it is the mechanism. A buddy sees one
+target. A stranger gets a 403 from the server, not a hidden button. The Wall of
+Shame is opt-in per member. You can export everything we hold about you as
+JSON, or delete it, and deletion scrubs your identifiers immediately.
+
+### 3. Value & impact
+
+Students, freelancers, students-of-music, and anyone with a "self-imposed
+deadline" that has quietly stopped existing.
+
+Concrete example: Sam has promised a thesis chapter by Friday. In Panic Plan he
+creates the target, invites Riley as a witness, and picks chaos level 4. On
+Wednesday the app starts escalating past *Legal*: "I have started a formal
+record of this." Riley can see the target and the panic meter, but cannot see
+Riley's other data, cannot edit the target, and cannot extend the deadline.
+When Sam finishes, the log shows a target completed on time with two witnesses
+on the record — which is exactly the kind of evidence a supervisor, a client
+or a funding body asks for and nobody can currently produce.
+
+The secondary benefit is that **the app is fun to fail at**. Deadlines get
+completed partly because the failure mode is a joke rather than a nag, and
+partly because the social cost of missing is legible and shared rather than
+private and ashamed.
+
+### 4. Why TideCloak matters
+
+TideCloak is not a login button bolted onto this app. It is the identity
+substrate that makes the trust story work.
+
+**Hybrid (BFF) mode.** We run the SDK in `authMode: "hybrid"`. The browser
+never receives a TideCloak token. The SDK generates a PKCE verifier, redirects
+to TideCloak, and on the callback hands the authorization code to *our*
+server. The server performs the code exchange, verifies the ID token against
+the realm's JWKS, and issues our own httpOnly session cookie. Tokens never
+reach the browser, so there is nothing in localStorage to steal and nothing in
+a tab for an extension to read.
+
+**One identity, many sign-in paths.** A member can sign up with email and
+password, or sign in with TideCloak, and both converge on the same account —
+the link is made by verified email, so the two paths never fork into two
+half-identities.
+
+**Roles that mean something.** The realm defines `MEMBER`, `MODERATOR` and
+`ADMIN` as first-class realm roles, and the realm ships with the app (imported
+on first boot). A moderator can hide a roast; an admin can change a role. But
+the TideCloak role is only the *outer* layer: ownership of a target is checked
+per resource on the server. Identity proves *who you are*; the database decides
+*what you may touch*. Getting that separation right is what stops a deadline
+tool from becoming a surveillance tool.
+
+**Verifiable, self-hosted identity.** The realm is a file in this repository.
+Anyone can run the whole thing, including the IdP, with one command, and
+inspect exactly what the identity provider holds.
+
+### 5. Prototype & storytelling
+
+The prototype is a working full-stack application, not a mockup. Everything
+below works, including the parts that are usually faked.
+
+**The moment to watch: the escalation.** Create a target due tomorrow with
+chaos level 4, press *Deploy a roast*, and watch the tier climb from
+*Passive-Aggressive* through *Legal* to *Desperate* as the deadline approaches.
+The copy changes, the panic meter fills, and each roast carries a meme
+rendered through our own server. A buddy signs in, sees only that one target,
+and can deploy a roast of their own.
+
+**Live, not simulated:**
+
+- Real sign-up, email verification and password reset (the links are printed
+  to the server log when SMTP is not configured, so the flow is demonstrable
+  offline).
+- Real TideCloak sign-in in hybrid mode against a live
+  `tideorg/tidecloak-dev` container, with the realm imported from
+  `server/tidecloak/panicplan-realm.json`.
+- Real PostgreSQL with committed Prisma migrations, real session rotation,
+  real server-enforced roles, real data export and real deletion.
+- A public audit log that records every action, and a Wall of Shame that only
+  shows members who opted in.
+
+**The trust demo:** sign in as a stranger and request a buddy's target. The
+server returns 403. The data is never sent, and no amount of poking at the
+client will reveal it. Then open Settings → *Export my data* and show a JSON
+file with everything we hold — and that there is no password hash in it.
+
+## Setup
 
 ### Docker (one command)
 
@@ -54,26 +151,27 @@ docker compose up -d --build
 | API health | http://localhost:4000/api/health |
 | TideCloak admin | http://localhost:8081 (admin / password) |
 
-The first boot imports the `panicplan` realm automatically, so TideCloak sign-in
-works immediately.
+The `panicplan` realm is imported automatically on first boot, so TideCloak
+sign-in works out of the box. Seed the demo accounts with:
+
+```bash
+docker compose --profile seed run --rm seed
+```
 
 ### Local development
 
 ```bash
-# 1. Database
 createdb panicplan
 psql -c "CREATE USER panicplan WITH PASSWORD 'panicplan' CREATEDB;"
 
-# 2. API
 cd server
-cp .env.example .env           # point DATABASE_URL at your local postgres
+cp .env.example .env
 npm install
 npx prisma migrate deploy
 npx prisma generate
 npm run prisma:seed
 npm run dev                    # http://localhost:4000
 
-# 3. Client
 cd ..
 npm install
 npm run dev                    # http://localhost:5173
@@ -81,150 +179,56 @@ npm run dev                    # http://localhost:5173
 
 ### Demo accounts
 
-Seeded local accounts (password `Password123!`):
+Password for all of them: `Password123!`
 
 | Email | Role |
 |---|---|
 | `ada@panicplan.local` | ADMIN |
 | `morgan@panicplan.local` | MODERATOR |
 | `sam@panicplan.local` | MEMBER |
-| `riley@panicplan.local` | MEMBER (on the Wall of Shame) |
+| `riley@panicplan.local` | MEMBER, on the Wall of Shame |
 
-TideCloak account: `tide@panicplan.local` / `Password123!` (imported with the realm).
+TideCloak: `tide@panicplan.local` / `Password123!` (imported with the realm).
 
----
-
-## How TideCloak is used
-
-We use **hybrid / BFF mode** rather than the browser flow:
-
-```
-browser ──redirect──> TideCloak ──code+PKCE──> browser
-                                              │
-                                              ▼
-                              our server exchanges the code
-                                              │
-                                              ▼
-                              httpOnly session cookie + our own JWT
-```
-
-* The TideCloak access token **never touches the browser**.
-* The server performs the code exchange, calls the userinfo endpoint, and
-  links the TideCloak identity to a Panic Plan account by email — so signing in
-  with TideCloak and with a password converge on one account.
-* Roles are enforced **server-side** on every route. The client only decides
-  what to render; it never decides what is allowed.
-
-The realm, client, roles and demo user live in
-[`server/tidecloak/panicplan-realm.json`](server/tidecloak/panicplan-realm.json)
-and are imported on first boot.
-
----
-
-## What is implemented
-
-### Core
-- End-to-end journey: sign up → verify email → create a target → add steps →
-  invite a buddy → get roasted → complete it → take the victory lap.
-- Every control is wired. No placeholder screens, no dead buttons.
-
-### Auth & identity
-- Email + password (bcrypt, cost 12) **and** TideCloak SSO.
-- Email verification and password reset via one-time hashed tokens (24h / 1h).
-- Sessions: 15-minute access token in memory, rotating refresh token in an
-  httpOnly cookie, 7-day or 30-day ("remember me"), revocable server-side.
-- Roles `MEMBER` / `MODERATOR` / `ADMIN` enforced by middleware, plus
-  per-target ownership checks (owner, buddy, stranger).
-
-### Data & persistence
-- PostgreSQL 16 with Prisma. Migrations are committed and run automatically on
-  deploy (`prisma migrate deploy`).
-- Zod validation on both sides — the client mirrors the server schemas for
-  instant feedback, the server is the authority.
-- Backups via `scripts/backup.sh`; per-user JSON export in Settings; deletion
-  on request scrubs identifiers immediately.
-
-### UX & accessibility
-- Mobile-responsive from 320px up.
-- Keyboard navigable, focus trapped in dialogs, `aria-live` announcements,
-  labelled inputs with `aria-describedby` errors, visible focus rings.
-- One design system (CSS custom properties for space, colour, type).
-- Optimistic interactions, skeleton loaders, and empty/error states on every
-  screen. Destructive actions get a confirmation, and the ones that can be
-  undone get an **Undo** toast.
-
-### Quality
-- 39 server tests (Vitest + Supertest) and 24 client tests (Vitest + Testing
-  Library).
-- ESLint, Prettier, and `tsc --noEmit` on the TypeScript server, all in CI.
-- Sentry error tracking (DSN via env, no-op when unset) and first-party
-  analytics stored in our own database — no third-party tracker.
-
-### Deployment & ops
-- `docker compose up -d --build` for production,
-  `docker-compose.staging.yml` as a separate staging environment with its own
-  database and ports.
-- Every secret comes from the environment; `.env` is gitignored.
-- `/api/health` (liveness) and `/api/health/ready` (database) plus container
-  healthchecks.
-- Structured request logs via morgan, readable with `docker compose logs -f`.
-
-### Trust
-- [Privacy policy](src/pages/Privacy.jsx) and [terms of service](src/pages/Terms.jsx)
-  with real content, not placeholders.
-- In-app [help and onboarding](src/pages/Help.jsx).
-- [Feedback channel](src/pages/Feedback.jsx) that works signed in or out.
-
----
-
-## Meme sourcing
-
-Every roast carries a meme. Templates come from a live pool
-(`api.memegen.link`, cached server-side for 6 hours) plus a curated pack in
-[`server/data/meme-pack.json`](server/data/meme-pack.json) that the team
-extends with formats spotted on the Instagram community.
-
-Images are rendered and proxied through `/api/memes/render`, so the browser
-never calls a third party and repeat views are served from disk. If the meme
-service is down, the UI falls back to a pure-CSS text card rather than a broken
-image. No third-party image is vendored into this repository.
-
----
-
-## Tests
+### Tests and checks
 
 ```bash
-npm test                      # client
-cd server && npm test         # server
-cd server && npm run typecheck
-npm run lint                  # both
+npm test                       # client
+cd server && npm test          # server: 39 API and unit tests
+cd server && npm run typecheck # tsc --noEmit
+npm run lint                   # both
+./scripts/smoke.sh             # end-to-end against a running stack
+./scripts/backup.sh create     # pg_dump backup
 ```
 
----
-
-## Project layout
+## How it is built
 
 ```
 .
-├── src/                     React client (Vite)
-│   ├── components/          UI primitives, meme card, panic meter, dialogs
+├── src/                     React client (Vite) - design system, one file per screen
+│   ├── components/          UI primitives, meme card, panic meter, onboarding
 │   ├── lib/                 api, auth, tidecloak, validation, format, analytics
-│   └── pages/               one file per screen
+│   └── pages/               Home, Target, Login, Register, Settings, Admin, ...
 ├── server/                  Express + TypeScript API
 │   ├── prisma/              schema, migrations, seed
 │   ├── src/
-│   │   ├── middleware/      auth, RBAC, error handling
+│   │   ├── middleware/      auth, RBAC, optional auth, error handling
 │   │   ├── routes/          auth, targets, shame, memes, users, analytics, audit
 │   │   └── services/        auth, email, roast engine, memes, tidecloak
 │   ├── data/meme-pack.json  curated meme templates
 │   ├── tidecloak/           realm import file
-│   └── tests/               API and unit tests
-├── scripts/backup.sh        pg_dump backup and restore
+│   └── tests/               39 API and unit tests
+├── scripts/                 backup.sh, smoke.sh
 ├── docker-compose.yml        production
 └── docker-compose.staging.yml
 ```
 
----
+**Stack:** React 19 + Vite · React Router · TanStack Query · Express ·
+TypeScript · Prisma · PostgreSQL 16 · Zod · TideCloak (hybrid) · Docker Compose
+· Vitest · GitHub Actions.
+
+More detail in [docs/OPERATIONS.md](docs/OPERATIONS.md) — deployment,
+health checks, backups, logs and secret rotation.
 
 ## Team
 

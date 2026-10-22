@@ -1,5 +1,7 @@
 import { config } from "../config.js";
 import { prisma } from "../db.js";
+import jwt from "jsonwebtoken";
+import { JwksClient } from "jwks-rsa";
 
 /**
  * TideCloak integration (hybrid / BFF mode).
@@ -21,6 +23,22 @@ interface TokenResponse {
   refresh_token?: string;
   id_token?: string;
   expires_in?: number;
+}
+
+let cachedJwks: JwksClient | null = null;
+
+function getJwks() {
+  if (!cachedJwks) {
+    cachedJwks = new JwksClient({
+      jwksUri: config.tidecloak.jwksUri,
+      cache: true,
+      cacheMaxEntries: 5,
+      cacheMaxAge: 10 * 60 * 1000,
+      rateLimit: true,
+      jwksRequestsPerMinute: 10,
+    });
+  }
+  return cachedJwks;
 }
 
 export function isConfigured(): boolean {
@@ -69,6 +87,39 @@ export async function exchangeCode(params: {
   return (await res.json()) as TokenResponse;
 }
 
+/**
+ * Verifies an ID token against the realm's JWKS and returns its claims.
+ * The audience is checked against our own client id, so a token minted for a
+ * different client is rejected.
+ */
+export async function verifyIdToken(idToken: string): Promise<Record<string, unknown>> {
+  const t = config.tidecloak;
+  const client = getJwks();
+  const decoded = jwt.decode(idToken, { complete: true });
+  if (!decoded?.header?.kid) throw new Error("TideCloak ID token has no key id.");
+
+  const key = await client.getSigningKey(decoded.header.kid);
+  const publicKey = key.getPublicKey();
+
+  const options: jwt.VerifyOptions = { algorithms: ["RS256"] };
+  if (t.audience || t.clientId) options.audience = t.audience || t.clientId;
+  // The issuer recorded in the token is whichever host the browser reached,
+  // while the server may talk to the IdP over an internal address. Both are
+  // listed explicitly, and only those are accepted.
+  const issuers = t.issuer
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (issuers.length === 1) options.issuer = issuers[0];
+  else if (issuers.length > 1) options.issuer = issuers as [string, ...string[]];
+
+  const payload = jwt.verify(idToken, publicKey, options) as Record<string, unknown>;
+  return payload;
+}
+
+/**
+ * Reads the profile from the userinfo endpoint.
+ */
 export async function fetchProfile(accessToken: string): Promise<TidecloakProfile> {
   const t = config.tidecloak;
   if (!t.userinfoEndpoint) throw new Error("TIDECLOAK_USERINFO_ENDPOINT is not configured");
@@ -80,6 +131,10 @@ export async function fetchProfile(accessToken: string): Promise<TidecloakProfil
   if (!res.ok) throw new Error(`TideCloak userinfo failed (${res.status})`);
 
   const raw = (await res.json()) as Record<string, unknown>;
+  return toProfile(raw);
+}
+
+function toProfile(raw: Record<string, unknown>): TidecloakProfile {
   const sub = String(raw.sub ?? "");
   const email = String(raw.email ?? raw.preferred_username ?? "");
   if (!sub || !email) throw new Error("TideCloak profile is missing sub or email");
@@ -90,6 +145,25 @@ export async function fetchProfile(accessToken: string): Promise<TidecloakProfil
     name: String(raw.name ?? raw.preferred_username ?? email.split("@")[0]),
     emailVerified: raw.email_verified === true || raw.email_verified === "true",
   };
+}
+
+/**
+ * Resolves the signed-in member from a TideCloak token response.
+ *
+ * The ID token is preferred: it is signed, audience-checked, and carries the
+ * email and the verification flag. The userinfo endpoint is the fallback for
+ * deployments where the ID token is not returned.
+ */
+export async function resolveProfile(tokens: TokenResponse): Promise<TidecloakProfile> {
+  if (tokens.id_token) {
+    try {
+      const claims = await verifyIdToken(tokens.id_token);
+      return toProfile(claims);
+    } catch (err) {
+      console.warn("ID token verification failed, falling back to userinfo:", err);
+    }
+  }
+  return fetchProfile(tokens.access_token);
 }
 
 /**
