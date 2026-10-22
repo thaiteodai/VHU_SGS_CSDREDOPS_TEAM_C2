@@ -1,0 +1,64 @@
+{
+  "templates": [
+    {
+      "id": "drake",
+      "name": "Drake Hotline Bling",
+      "lines": 2,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    },
+    {
+      "id": "two-buttons",
+      "name": "Two Buttons",
+      "lines": 2,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    },
+    {
+      "id": "distracted-boyfriend",
+      "name": "Distracted Boyfriend",
+      "lines": 3,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    },
+    {
+      "id": "surprised-pikachu",
+      "name": "Surprised Pikachu",
+      "lines": 2,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    },
+    {
+      "id": "this-is-fine",
+      "name": "This Is Fine",
+      "lines": 2,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    },
+    {
+      "id": "waiting-sketch",
+      "name": "Waiting Skeleton",
+      "lines": 2,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    },
+    {
+      "id": "always-has-been",
+      "name": "Always Has Been",
+      "lines": 2,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    },
+    {
+      "id": "left-exit",
+      "name": "Left Exit 12 Off Ramp",
+      "lines": 2,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    },
+    {
+      "id": "galaxy-brain",
+      "name": "Galaxy Brain",
+      "lines": 4,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    },
+    {
+      "id": "running-away-balloon",
+      "name": "Running Away Balloon",
+      "lines": 3,
+      "attribution": "Curated from the Instagram community - classic format, text ours"
+    }
+  ]
+}

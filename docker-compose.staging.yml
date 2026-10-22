@@ -1,0 +1,47 @@
+version: "3.9"
+
+# Staging overlay. Kept deliberately separate from production:
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
+#
+# App:    http://localhost:8081
+# API:    http://localhost:4001/api/health
+# IdP:    http://localhost:8082
+
+services:
+  db:
+    environment:
+      POSTGRES_DB: panicplan_staging
+    volumes:
+      - pgdata-staging:/var/lib/postgresql/data
+
+  tidecloak:
+    environment:
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${TIDECLOAK_ADMIN_PASSWORD:-password}
+    volumes:
+      - ./server/tidecloak:/opt/keycloak/data/import:ro
+      - tidecloak-data-staging:/opt/keycloak/data
+    ports:
+      - "8082:8080"
+
+  server:
+    environment:
+      NODE_ENV: staging
+      DATABASE_URL: postgresql://panicplan:${POSTGRES_PASSWORD:-panicplan}@db:5432/panicplan_staging?schema=public
+      CLIENT_ORIGIN: ${STAGING_CLIENT_ORIGIN:-http://localhost:8081}
+      APP_URL: ${STAGING_APP_URL:-http://localhost:8081}
+      TIDECLOAK_ISSUER: http://tidecloak:8080/realms/panicplan
+      TIDECLOAK_AUTHORIZATION_ENDPOINT: http://tidecloak:8080/realms/panicplan/protocol/openid-connect/auth
+      TIDECLOAK_TOKEN_ENDPOINT: http://tidecloak:8080/realms/panicplan/protocol/openid-connect/token
+      TIDECLOAK_USERINFO_ENDPOINT: http://tidecloak:8080/realms/panicplan/protocol/openid-connect/userinfo
+      TIDECLOAK_JWKS_URI: http://tidecloak:8080/realms/panicplan/protocol/openid-connect/certs
+      TIDECLOAK_REDIRECT_URI: ${STAGING_TIDECLOAK_REDIRECT_URI:-http://localhost:8081/auth/callback}
+    ports:
+      - "4001:4000"
+
+  client:
+    ports:
+      - "8081:80"
+
+volumes:
+  pgdata-staging:
+  tidecloak-data-staging:

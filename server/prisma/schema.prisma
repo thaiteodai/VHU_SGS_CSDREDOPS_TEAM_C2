@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+enum TargetStatus {
+  OPEN
+  COMPLETED
+  ABANDONED
+}
+
+enum Personality {
+  OVERCONFIDENT_OPTIMIST
+  SILENT_SLOBBER
+  POLITE_DEFERRER
+  CHAOTIC_SCHEDULER
+  OPTIMISTIC_REALIST
+  LAST_MINUTE_PANIC
+  METHODICAL_MASOCHIST
+  PROCALLED_PROVOCATIONIST
+}
+
+enum BuddyStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  REVOKED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  name          String
+  role          Role      @default(MEMBER)
+  emailVerified Boolean   @default(false)
+  showOnWall    Boolean   @default(false)
+  tidecloakSub  String?   @unique
+  deletedAt     DateTime?
+  onboardedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  refreshTokens     RefreshToken[]
+  tidecloakTokens   TidecloakToken[]
+  verificationTokens EmailVerificationToken[]
+  resetTokens       PasswordResetToken[]
+  targets           Target[]            @relation("TargetOwner")
+  steps             Step[]
+  buddyLinks        BuddyLink[]         @relation("BuddyMember")
+  buddyInvites      BuddyLink[]         @relation("BuddyInviter")
+  roasts            Roast[]
+  auditEvents       AuditEvent[]
+  feedback          Feedback[]
+  analyticsEvents   AnalyticsEvent[]
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  rememberMe Boolean   @default(false)
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model TidecloakToken {
+  id           String   @id @default(cuid())
+  userId       String
+  accessToken  String
+  refreshToken String?
+  idToken      String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Target {
+  id          String       @id @default(cuid())
+  ownerId     String
+  title       String
+  description String?
+  dueAt       DateTime
+  chaosLevel  Int          @default(3)
+  personality Personality  @default(OVERCONFIDENT_OPTIMIST)
+  status      TargetStatus @default(OPEN)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  owner   User        @relation("TargetOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  steps   Step[]
+  buddies BuddyLink[]
+  roasts  Roast[]
+
+  @@index([ownerId, status])
+  @@index([dueAt])
+}
+
+model Step {
+  id        String   @id @default(cuid())
+  targetId  String
+  userId    String
+  label     String
+  done      Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  target Target @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([targetId, sortOrder])
+}
+
+model BuddyLink {
+  id           String      @id @default(cuid())
+  targetId     String
+  buddyId      String?
+  inviterId    String
+  inviteEmail  String
+  status       BuddyStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+  respondedAt  DateTime?
+
+  target  Target @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  buddy   User?  @relation("BuddyMember", fields: [buddyId], references: [id], onDelete: Cascade)
+  inviter User   @relation("BuddyInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@unique([targetId, buddyId])
+  @@index([targetId])
+  @@index([buddyId])
+}
+
+model Roast {
+  id             String   @id @default(cuid())
+  targetId       String
+  authorId       String
+  tier           Int
+  body           String
+  memeTemplateId String?
+  memeTop        String?
+  memeBottom     String?
+  memeAttribution String?
+  hiddenAt       DateTime?
+  createdAt      DateTime @default(now())
+
+  target Target @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([targetId, createdAt])
+}
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorName String
+  action    String
+  reason    String
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([createdAt])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String?
+  message   String
+  email     String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String
+  path      String?
+  userId    String?
+  meta      String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+}

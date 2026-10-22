@@ -1,0 +1,73 @@
+{
+  "realm": "panicplan",
+  "displayName": "Panic Plan",
+  "enabled": true,
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "sslRequired": "none",
+  "roles": {
+    "realm": [
+      {
+        "name": "MEMBER",
+        "description": "Standard Panic Plan member. Owns targets, invites buddies, deploys roasts."
+      },
+      {
+        "name": "MODERATOR",
+        "description": "Can hide roasts and moderate content."
+      },
+      {
+        "name": "ADMIN",
+        "description": "Full control: members, roles and content moderation."
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "panicplan-web",
+      "name": "Panic Plan Web",
+      "description": "The Panic Plan browser client. Public client using PKCE in hybrid mode.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:8080"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "tide@panicplan.local",
+      "email": "tide@panicplan.local",
+      "firstName": "Tide",
+      "lastName": "Member",
+      "enabled": true,
+      "emailVerified": true,
+      "realmRoles": ["MEMBER"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Password123!",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
